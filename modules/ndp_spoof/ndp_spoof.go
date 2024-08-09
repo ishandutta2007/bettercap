@@ -13,12 +13,13 @@ import (
 
 type NDPSpoofer struct {
 	session.SessionModule
-	neighbour    net.IP
-	prefix       string
-	prefixLength int
-	addresses    []net.IP
-	ban          bool
-	waitGroup    *sync.WaitGroup
+	neighbour      net.IP
+	prefix         string
+	prefixLength   int
+	routerLifetime int
+	addresses      []net.IP
+	ban            bool
+	waitGroup      *sync.WaitGroup
 }
 
 func NewNDPSpoofer(s *session.Session) *NDPSpoofer {
@@ -36,7 +37,7 @@ func NewNDPSpoofer(s *session.Session) *NDPSpoofer {
 
 	mod.AddParam(session.NewStringParameter("ndp.spoof.neighbour",
 		"fe80::1",
-		session.IPv6Validator,
+		`^([:a-fA-F0-9]{6,})?$`,
 		"Neighbour IPv6 address to spoof, clear to disable NA."))
 
 	mod.AddParam(session.NewStringParameter("ndp.spoof.prefix", "d00d::", "",
@@ -44,6 +45,9 @@ func NewNDPSpoofer(s *session.Session) *NDPSpoofer {
 
 	mod.AddParam(session.NewIntParameter("ndp.spoof.prefix.length", "64",
 		"IPv6 prefix length for router advertisements."))
+
+	mod.AddParam(session.NewIntParameter("ndp.spoof.router_lifetime", "10",
+		"Router lifetime for router advertisements in seconds."))
 
 	mod.AddHandler(session.NewModuleHandler("ndp.spoof on", "",
 		"Start NDP spoofer.",
@@ -99,6 +103,8 @@ func (mod *NDPSpoofer) Configure() error {
 	} else {
 		if err, neigh = mod.StringParam("ndp.spoof.neighbour"); err != nil {
 			return err
+		} else if neigh == "" {
+			mod.neighbour = nil
 		} else if mod.neighbour = net.ParseIP(neigh); mod.neighbour == nil {
 			return fmt.Errorf("can't parse neighbour address %s", neigh)
 		}
@@ -117,7 +123,11 @@ func (mod *NDPSpoofer) Configure() error {
 
 	if err, mod.prefix = mod.StringParam("ndp.spoof.prefix"); err != nil {
 		return err
-	} else if err, mod.prefixLength = mod.IntParam("ndp.spoof.prefix.length"); err != nil {
+	}
+	if err, mod.prefixLength = mod.IntParam("ndp.spoof.prefix.length"); err != nil {
+		return err
+	}
+	if err, mod.routerLifetime = mod.IntParam("ndp.spoof.router_lifetime"); err != nil {
 		return err
 	}
 
@@ -153,7 +163,7 @@ func (mod *NDPSpoofer) Start() error {
 			if mod.prefix != "" {
 				mod.Debug("sending router advertisement for prefix %s(%d)", mod.prefix, mod.prefixLength)
 				err, ra := packets.ICMP6RouterAdvertisement(mod.Session.Interface.IPv6, mod.Session.Interface.HW,
-					mod.prefix,	uint8(mod.prefixLength))
+					mod.prefix, uint8(mod.prefixLength), uint16(mod.routerLifetime))
 				if err != nil {
 					mod.Error("error creating ra packet: %v", err)
 				} else if err = mod.Session.Queue.Send(ra); err != nil {

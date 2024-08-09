@@ -1,15 +1,15 @@
 package network
 
 /*
-#cgo LDFLAGS: -framework CoreWLAN
+#cgo LDFLAGS: -framework CoreWLAN -framework Foundation
 #include <stdbool.h>
 #include <stdlib.h>
 
 const char *GetSupportedFrequencies(const char *iface);
 bool SetInterfaceChannel(const char *iface, int channel);
 */
-
 import "C"
+
 import (
 	"encoding/json"
 	"errors"
@@ -19,6 +19,10 @@ import (
 
 func getInterfaceName(iface net.Interface) string {
 	return iface.Name
+}
+
+func ForceMonitorMode(iface string) error {
+	return nil
 }
 
 func SetInterfaceChannel(iface string, channel int) error {

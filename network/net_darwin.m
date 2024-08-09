@@ -1,6 +1,20 @@
 #import <Foundation/Foundation.h>
 #import <CoreWLAN/CoreWLAN.h>
 
+// The go side of things expects frequencies.
+int chan2freq(int channel) {
+    if(channel <= 13){ 
+        return ((channel - 1) * 5) + 2412;
+	} else if(channel == 14) {
+		return 2484;
+	} else if(channel <= 173) {
+		return ((channel - 7) * 5) + 5035;
+	} else if(channel == 177) {
+		return 5885;
+	}
+    return 0;
+}
+
 const char *GetSupportedFrequencies(const char *iface) {
     @autoreleasepool {
         NSString *interfaceName = [NSString stringWithUTF8String:iface];
@@ -13,8 +27,9 @@ const char *GetSupportedFrequencies(const char *iface) {
         NSMutableArray *frequencies = [NSMutableArray arrayWithCapacity:[supportedChannels count]];
 
         for (CWChannel *channel in supportedChannels) {
-            [frequencies addObject:@(channel.frequency)];
-        }
+            // The go side of things expects frequencies.
+            [frequencies addObject:@(chan2freq(channel.channelNumber))];
+        }   
 
         NSError *error = nil;
         NSData *jsonData = [NSJSONSerialization dataWithJSONObject:frequencies options:0 error:&error];
@@ -37,13 +52,21 @@ bool SetInterfaceChannel(const char *iface, int channel) {
         }
 
         NSError *error = nil;
-        CWChannel *newChannel = [[CWChannel alloc] initWithChannelNumber:channel channelWidth:kCWChannelWidthUnknown];
-        [interface setWLANChannel:newChannel error:&error];
-        if (error) {
-            NSLog(@"Failed to set channel: %@", error);
-            return false;
+        NSSet *supportedChannels = [interface supportedWLANChannels];
+        for (CWChannel * channelObj in supportedChannels) {
+            // it looks like we can't directly build a CWChannel object anymore
+            if ([channelObj channelNumber] == channel) {
+                [interface setWLANChannel:channelObj error:nil];
+                 if (error) {
+                    NSLog(@"Failed to set channel: %@", error);
+                    return false;
+                }
+                return true;
+            }
         }
 
-        return true;
+        NSLog(@"channel %d not supported", channel);
+
+        return false;
     }
 }
