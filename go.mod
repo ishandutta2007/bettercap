@@ -12,6 +12,7 @@ require (
 	github.com/bettercap/nrf24 v0.0.0-20190219153547-aa37e6d0e0eb
 	github.com/bettercap/readline v0.0.0-20210228151553-655e48bcb7bf
 	github.com/bettercap/recording v0.0.0-20190408083647-3ce1dcf032e3
+	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/elazarl/goproxy v0.0.0-20240726154733-8b0c20506380
 	github.com/evilsocket/islazy v1.11.0
@@ -22,20 +23,22 @@ require (
 	github.com/google/gousb v1.1.3
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.3
+	github.com/grandcat/zeroconf v1.0.0
 	github.com/hashicorp/go-bexpr v0.1.14
-	github.com/hashicorp/mdns v1.0.5
 	github.com/inconshreveable/go-vhost v1.0.0
 	github.com/jpillora/go-tld v1.2.1
 	github.com/malfunkt/iprange v0.9.0
 	github.com/mdlayher/dhcp6 v0.0.0-20190311162359-2a67805d7d0b
 	github.com/miekg/dns v1.1.61
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/phin1x/go-ipp v1.6.1
 	github.com/robertkrimen/otto v0.4.0
 	github.com/stratoberry/go-gpsd v1.3.0
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
 	github.com/thoj/go-ircevent v0.0.0-20210723090443-73e444401d64
 	go.einride.tech/can v0.12.0
 	golang.org/x/net v0.28.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
